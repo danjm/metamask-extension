@@ -2706,6 +2706,7 @@ function clearApprovedOrigins () {
 
 function approvePermissionRequest (requestId) {
   return (dispatch) => {
+    console.log('function approvePermissionRequest  requestId', requestId)
     background.approvePermissionRequest(requestId)
   }
 }

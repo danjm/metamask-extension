@@ -529,6 +529,7 @@ export default class ConfirmTransactionBase extends Component {
       assetImage,
       warning,
       unapprovedTxCount,
+      plugins,
     } = this.props
     const { submitting, submitError } = this.state
 
@@ -575,6 +576,7 @@ export default class ConfirmTransactionBase extends Component {
         onCancelAll={() => this.handleCancelAll()}
         onCancel={() => this.handleCancel()}
         onSubmit={() => this.handleSubmit()}
+        plugins={plugins}
       />
     )
   }

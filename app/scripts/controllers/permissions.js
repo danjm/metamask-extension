@@ -2,11 +2,11 @@
 const SAFE_METHODS = require('../lib/permissions-safe-methods.json')
 const createPermissions = require('json-rpc-capabilities-middleware')
 const ComposableObservableStore = require('../lib/ComposableObservableStore')
-
+const createAsyncMiddleware = require('json-rpc-engine/src/createAsyncMiddleware')
 
 class PermissionsController {
 
-  constructor ({ openPopup, closePopup } = {}) {
+  constructor ({ openPopup, closePopup, pluginsController } = {}) {
     this._openPopup = openPopup
     this._closePopup = closePopup
 
@@ -19,6 +19,8 @@ class PermissionsController {
       permissions: this.permissions.store,
       requests: this.permissions.memStore,
     })
+
+    this.pluginsController = pluginsController
   }
 
   createMiddleware ({ origin }) {
@@ -26,11 +28,14 @@ class PermissionsController {
   }
 
   async approvePermissionRequest (id) {
+    console.log('!!!!! approvePermissionRequest id', id)
     const approval = this.pendingApprovals[id]
     const res = approval.res
+    console.log('!!!!! approvePermissionRequest res', res)
     res(true)
     this._closePopup && this._closePopup()
     delete this.pendingApprovals[id]
+    console.log('this.pendingApprovals', this.pendingApprovals)
   }
 
   async rejectPermissionRequest (id) {
@@ -100,17 +105,38 @@ class PermissionsController {
           description: 'Read from your profile',
           method: (req, res, next, end) => {
             res.result = this.testProfile
+            console.log('!!!!!!!!!!!!!!!!!!', 1111)
             end()
           },
         },
         'writeToYourProfile': {
           description: 'Write to your profile.',
           method: (req, res, next, end) => {
+            console.log('!!!!!!!!!!!!!!!!!!', 2222)
             const [ key, value ] = req.params
             this.testProfile[key] = value
             res.result = this.testProfile
             return end()
           },
+        },
+        'eth_plugin/plugin123': {
+          description: 'Connect with plugin $1, which will run a script in the background of your MetaMask.',
+          method: createAsyncMiddleware(async (req, res, next, end) => {
+            console.log('!!!!!!!!!!! 1')
+            console.log('req', req)
+            const pluginNameMatch = req.method.match(/eth_plugin\/(.+)/)
+            const pluginName = pluginNameMatch && pluginNameMatch[1]
+            // let plugin = this.pluginsController.get(pluginName)
+            let plugin
+            console.log('!!!!!!!!!!! 2')
+
+            if (!plugin) {
+              plugin = await this.pluginsController.create(pluginName)
+            }
+            console.log('!!!!!!!!!!! 3')
+            res.result = plugin
+            return await plugin.handleRpcRequest(req.params[0])
+          }),
         },
       },
 
@@ -132,7 +158,7 @@ class PermissionsController {
 
         // const message = `The site ${siteTitle} at ${origin} would like permission to:\n - ${descriptions.join('\n- ')}`
         this._openPopup && this._openPopup()
-
+        console.log('!!! requestUserApproval metadata, opts', metadata, opts)
         return new Promise((res, rej) => {
           this.pendingApprovals[id] = { res, rej }
         })

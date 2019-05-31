@@ -11,7 +11,7 @@ const mapStateToProps = state => {
     seedWords,
     suggestedTokens,
     providerRequests,
-    requests,
+    requests = {},
   } = metamask
   const { forgottenPassword } = appState
   const permissionRequests = requests.permissionsRequests || []

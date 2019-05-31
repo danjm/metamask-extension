@@ -7,7 +7,7 @@ export default class PermissionPageContainer extends PureComponent {
   static propTypes = {
     approvePermissionRequest: PropTypes.func.isRequired,
     rejectPermissionRequest: PropTypes.func.isRequired,
-    request: PropTypes.object.isRequired,
+    request: PropTypes.array.isRequired,
   };
 
   static contextTypes = {
@@ -26,26 +26,27 @@ export default class PermissionPageContainer extends PureComponent {
   }
 
   onCancel = () => {
-    const { request, rejectPermissionRequest } = this.props
-    const { id } = request.metadata
+    const { request: requests, rejectPermissionRequest } = this.props
+    const { id } = requests[0].metadata
     rejectPermissionRequest(id)
   }
 
   onSubmit = () => {
-    const { request, approvePermissionRequest } = this.props
-    const { id } = request.metadata
+    const { request: requests, approvePermissionRequest } = this.props
+    console.log('onSubmit requests', requests)
+    const { id } = requests[0].metadata
     approvePermissionRequest(id)
   }
 
   render () {
-    const { request } = this.props
-    const { origin, siteImage, siteTitle } = request
+    const { request: requests } = this.props
+    const { origin, metadata: { siteImage, siteTitle } } = requests[0]
 
     return (
       <div className="page-container permission-approval-container">
         <PermissionPageContainerHeader />
         <PermissionPageContainerContent
-          request={request}
+          request={requests}
           origin={origin}
           siteImage={siteImage}
           siteTitle={siteTitle}
