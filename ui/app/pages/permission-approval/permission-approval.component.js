@@ -5,7 +5,7 @@ import PermissionPageContainer from '../../components/app/permission-page-contai
 export default class PermissionApproval extends Component {
   static propTypes = {
     approvePermissionRequest: PropTypes.func.isRequired,
-    permissionRequest: PropTypes.object.isRequired,
+    permissionRequest: PropTypes.array.isRequired,
     rejectPermissionRequest: PropTypes.func.isRequired,
   };
 

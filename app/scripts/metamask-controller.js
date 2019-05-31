@@ -38,6 +38,7 @@ const TokenRatesController = require('./controllers/token-rates')
 const DetectTokensController = require('./controllers/detect-tokens')
 const ProviderApprovalController = require('./controllers/provider-approval')
 const PermissionsController = require('./controllers/permissions')
+const PluginsController = require('./controllers/plugins')
 const nodeify = require('./lib/nodeify')
 const accountImporter = require('./account-import-strategies')
 const getBuyEthUrl = require('./lib/buy-eth-url')
@@ -230,9 +231,12 @@ module.exports = class MetamaskController extends EventEmitter {
       publicConfigStore: this.publicConfigStore,
     })
 
+    this.pluginsController = new PluginsController()
+
     this.permissionsController = new PermissionsController({
       openPopup: opts.openPopup,
       closePopup: opts.closePopup,
+      pluginsController: this.pluginsController,
     })
 
     this.store.updateStructure({
@@ -246,6 +250,7 @@ module.exports = class MetamaskController extends EventEmitter {
       InfuraController: this.infuraController.store,
       CachedBalancesController: this.cachedBalancesController.store,
       PermissionsController: this.permissionsController.store,
+      PluginsController: this.pluginsController.store,
     })
 
     this.memStore = new ComposableObservableStore(null, {
@@ -266,6 +271,7 @@ module.exports = class MetamaskController extends EventEmitter {
       ShapeshiftController: this.shapeshiftController.store,
       InfuraController: this.infuraController.store,
       ProviderApprovalController: this.providerApprovalController.store,
+      PluginsController: this.pluginsController.store,
       PermissionsController: this.permissionsController.memStore,
     })
     this.memStore.subscribe(this.sendUpdate.bind(this))

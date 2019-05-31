@@ -67,7 +67,7 @@ export default class Home extends PureComponent {
 
     if (permissionRequests && permissionRequests.length > 0) {
       return (
-        <PermissionApproval permissionRequest={permissionRequests[0]} />
+        <PermissionApproval permissionRequest={permissionRequests} />
       )
     }
 

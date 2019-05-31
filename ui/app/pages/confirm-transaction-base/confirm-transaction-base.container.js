@@ -66,6 +66,7 @@ const mapStateToProps = (state, props) => {
     assetImages,
     network,
     unapprovedTxs,
+    plugins,
     metaMetricsSendCount,
   } = metamask
   const assetImage = assetImages[txParamsToAddress]
@@ -141,6 +142,7 @@ const mapStateToProps = (state, props) => {
     hideSubtitle: (!isMainnet && !showFiatInTestnets),
     hideFiatConversion: (!isMainnet && !showFiatInTestnets),
     metaMetricsSendCount,
+    plugins,
   }
 }
 

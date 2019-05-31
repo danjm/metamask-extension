@@ -4,7 +4,7 @@ import Identicon from '../../../ui/identicon'
 
 export default class PermissionPageContainerContent extends PureComponent {
   static propTypes = {
-    request: PropTypes.object.isRequired,
+    request: PropTypes.array.isRequired,
     selectedIdentity: PropTypes.object.isRequired,
     permissionsDescriptions: PropTypes.array.isRequired,
   }
@@ -14,8 +14,8 @@ export default class PermissionPageContainerContent extends PureComponent {
   };
 
   renderConnectVisual = () => {
-    const { request, selectedIdentity } = this.props
-    const { origin, siteImage, siteTitle } = request.metadata
+    const { request: requests, selectedIdentity } = this.props
+    const { origin, metadata: { siteImage, siteTitle } } = requests[0]
 
     return (
       <div className="permission-approval-visual">
@@ -47,11 +47,12 @@ export default class PermissionPageContainerContent extends PureComponent {
   }
 
   renderRequestedPermissions () {
-    const { request, permissionsDescriptions } = this.props
-    const { options } = request
+    console.log('this.props', this.props)
+    const { request: requests, permissionsDescriptions } = this.props
+    const options = requests.map(request => request.options.method)
     const { t } = this.context
-    const optsArr = Object.keys(options)
-
+    const optsArr = Object.values(options)
+    console.log('optsArr', optsArr)
     const items = optsArr.map((funcName) => {
       const matchingFuncs = permissionsDescriptions.filter(perm => perm.method === funcName)
       const match = matchingFuncs[0]
@@ -77,8 +78,9 @@ export default class PermissionPageContainerContent extends PureComponent {
   }
 
   render () {
+    console.log('render this.props', this.props)
     const { request } = this.props
-    const { siteTitle } = request.metadata
+    const { siteTitle } = request
     const { t } = this.context
 
     return (
