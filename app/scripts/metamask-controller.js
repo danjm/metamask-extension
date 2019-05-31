@@ -37,6 +37,7 @@ const BalancesController = require('./controllers/computed-balances')
 const TokenRatesController = require('./controllers/token-rates')
 const DetectTokensController = require('./controllers/detect-tokens')
 const PermissionsController = require('./controllers/permissions')
+const PluginsController = require('./controllers/plugins')
 const nodeify = require('./lib/nodeify')
 const accountImporter = require('./account-import-strategies')
 const getBuyEthUrl = require('./lib/buy-eth-url')
@@ -244,10 +245,13 @@ module.exports = class MetamaskController extends EventEmitter {
       this.isClientOpenAndUnlocked = memState.isUnlocked && this._isClientOpen
     })
 
+    this.pluginsController = new PluginsController()
+
     this.permissionsController = new PermissionsController({
       keyringController: this.keyringController,
       openPopup: opts.openPopup,
       closePopup: opts.closePopup,
+      pluginsController: this.pluginsController,
     },
     // TOOD: Persist/restore state here:
     {})
@@ -264,6 +268,7 @@ module.exports = class MetamaskController extends EventEmitter {
       InfuraController: this.infuraController.store,
       CachedBalancesController: this.cachedBalancesController.store,
       PermissionsController: this.permissionsController.permissions,
+      PluginsController: this.pluginsController.store,
     })
 
     this.memStore = new ComposableObservableStore(null, {
@@ -285,6 +290,7 @@ module.exports = class MetamaskController extends EventEmitter {
       ShapeshiftController: this.shapeshiftController,
       InfuraController: this.infuraController.store,
       PermissionsController: this.permissionsController.permissions,
+      PluginsController: this.pluginsController.store,
     })
     this.memStore.subscribe(this.sendUpdate.bind(this))
   }

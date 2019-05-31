@@ -62,7 +62,6 @@ export default class PermissionPageContainerContent extends PureComponent {
     const requestedMethods = Object.keys(request.permissions)
 
     const items = requestedMethods.map((methodName) => {
-
       const matchingFuncs = permissionsDescriptions.filter((perm) => {
         return perm.method === methodName
       })

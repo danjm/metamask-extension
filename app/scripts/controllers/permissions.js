@@ -11,13 +11,14 @@ const SAFE_METHODS = require('../lib/permissions-safe-methods.json')
 class PermissionsController {
 
   constructor ({
-    openPopup, closePopup, keyringController,
+    openPopup, closePopup, keyringController, pluginsController,
   } = {}, restoredState) {
     this._openPopup = openPopup
     this._closePopup = closePopup
     this.keyringController = keyringController
     this._initializePermissions(restoredState)
     this.engines = {} // { origin: middleware } map for selectedAddress compatibility
+    this.pluginsController = pluginsController
   }
 
   createMiddleware (options) {
@@ -150,6 +151,7 @@ class PermissionsController {
     res(approved.permissions)
     this._closePopup && this._closePopup()
     delete this.pendingApprovals[id]
+    console.log('this.pendingApprovals', this.pendingApprovals)
   }
 
   /**
@@ -212,6 +214,7 @@ class PermissionsController {
           description: 'Read from your profile',
           method: (_req, res, _next, end) => {
             res.result = this.testProfile
+            console.log('!!!!!!!!!!!!!!!!!!', 1111)
             end()
           },
         },
@@ -223,6 +226,25 @@ class PermissionsController {
             res.result = this.testProfile
             return end()
           },
+        },
+        'eth_plugin/plugin123': {
+          description: 'Connect with plugin $1, which will run a script in the background of your MetaMask.',
+          method: createAsyncMiddleware(async (req, res, next, end) => {
+            console.log('!!!!!!!!!!! 1')
+            console.log('req', req)
+            const pluginNameMatch = req.method.match(/eth_plugin\/(.+)/)
+            const pluginName = pluginNameMatch && pluginNameMatch[1]
+            // let plugin = this.pluginsController.get(pluginName)
+            let plugin
+            console.log('!!!!!!!!!!! 2')
+
+            if (!plugin) {
+              plugin = await this.pluginsController.create(pluginName)
+            }
+            console.log('!!!!!!!!!!! 3')
+            res.result = plugin
+            return await plugin.handleRpcRequest(req.params[0])
+          }),
         },
       },
 
