@@ -4,6 +4,12 @@ const createAsyncMiddleware = require('json-rpc-engine/src/createAsyncMiddleware
 const RpcCap = require('json-rpc-capabilities-middleware').CapabilitiesController
 const uuid = require('uuid/v4')
 
+const pluginApiDescriptionMap = {
+  onNewTx: 'Take action whenever a new transaction is created',
+  fetch: 'Retrieve data from external sites',
+  updatePluginState: 'Store data locally',
+}
+
 // Methods that do not require any permissions to use:
 const SAFE_METHODS = require('../lib/permissions-safe-methods.json')
 
@@ -81,6 +87,30 @@ class PermissionsController {
             site: await getSiteMetadata(),
           },
         }
+
+        const pluginPermissionNames = Object.keys(req.params[0])
+          .filter(key => key.match(/^eth_plugin_(.+)/))
+          .map(key => key.match(/^eth_plugin_(.+)/)[1])
+
+        if (pluginPermissionNames.length) {
+          const pluginPermissionRequestedAPIs = await Promise.all(
+            pluginPermissionNames.map(pluginName => {
+              return fetch(`http://localhost:8081/${pluginName}.json`)
+                .then(res => res.json())
+                .then(({ requestedAPIs }) => {
+                  return {
+                    pluginName,
+                    requestedAPIDescriptions: requestedAPIs.map(n => pluginApiDescriptionMap[n]),
+                  }
+                })
+            }))
+
+          pluginPermissionRequestedAPIs.forEach(({ pluginName, requestedAPIDescriptions }) => {
+            req.params[0]['eth_plugin_' + pluginName]['requestedAPIDescriptions'] = requestedAPIDescriptions
+          })
+
+        }
+
         req.params.push(metadata)
       }
 

@@ -42,22 +42,22 @@
           return showError(res)
         }
 
-        runPlugin()
+        runPlugin(Object.keys(perms)[0])
       })
     }
 
-    function runPlugin () {
+    function runPlugin (pluginKey) {
       ethereum.sendAsync({
-        method: 'eth_plugin_plugin123',
+        method: pluginKey,
         params: [],
       }, (err, result) => {
-        console.dir({ message: 'eth_plugin_plugin123 callback', err, result })
+        console.dir({ message: 'pluginKey callback', err, result })
         if (err) return alert('error!: ' + err) && rej(err)
         let message = ''
         if (result.error) {
           message = 'Site is unauthorized to run plugin.'
         } else {
-          message = `Plugin123 is running` // JSON.stringify(result.result)
+          message = `${pluginKey} is running` // JSON.stringify(result.result)
         }
         content.innerText = message
       })

@@ -30,7 +30,7 @@ const EdgeEncryptor = require('./edge-encryptor')
 const getFirstPreferredLangCode = require('./lib/get-first-preferred-lang-code')
 const getObjStructure = require('./lib/getObjStructure')
 const setupEnsIpfsResolver = require('./lib/ens-ipfs/setup')
-const SES = require('ses')
+// const SES = require('ses')
 
 const {
   ENVIRONMENT_TYPE_POPUP,
@@ -286,14 +286,14 @@ function setupController (initState, initLangCode) {
     }
   })
 
-  controller.pluginsController.on('new-plugin', ({ source, pluginName }) => {
-    const s = SES.makeSESRootRealm({consoleMode: 'allow', errorStackMode: 'allow', mathRandomMode: 'allow'})
-    console.log('provider', provider)
-    const updatePluginState = controller.pluginsController.updatePluginState.bind(controller.pluginsController, pluginName)
-    const newPluginSessified = s.evaluate(source, { updatePluginState })
-    console.log('newPluginSessified', newPluginSessified)
-    newPluginSessified(controller, fetch)
-  })
+  // controller.pluginsController.on('new-plugin', ({ source, pluginName }) => {
+  //   const s = SES.makeSESRootRealm({consoleMode: 'allow', errorStackMode: 'allow', mathRandomMode: 'allow'})
+  //   console.log('provider', provider)
+  //   const updatePluginState = controller.pluginsController.updatePluginState.bind(controller.pluginsController, pluginName)
+  //   const newPluginSessified = s.evaluate(source, { updatePluginState })
+  //   console.log('newPluginSessified', newPluginSessified)
+  //   newPluginSessified(controller, fetch)
+  // })
 
   // setup state persistence
   pump(

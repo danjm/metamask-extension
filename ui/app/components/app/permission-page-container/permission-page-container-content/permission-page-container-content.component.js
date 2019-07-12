@@ -75,18 +75,29 @@ export default class PermissionPageContainerContent extends PureComponent {
 
       let description = match.description
       let renderedName = methodName
+      let requestedAPIDescriptions
 
       const isPluginRequest = (methodName.match(/^eth_plugin_[A-z0-9]+/) && match.method === 'eth_plugin_')
       if (isPluginRequest) {
         renderedName = methodName.match(/^eth_plugin_([A-z0-9]+)/)[1]
         description = description.replace('$1', renderedName)
+        requestedAPIDescriptions = request.permissions[methodName].requestedAPIDescriptions
       }
+
       return (
         <li
           className="permission-requested"
           key={renderedName}
           >
           {description}
+          { isPluginRequest && 'This plugin will be able to:' }
+          {
+            isPluginRequest && (
+              <ul>
+                { requestedAPIDescriptions.map(apiDescription => <li className="permission-requested__sub-permission">- { apiDescription }</li>) }
+              </ul>
+            )
+          }
         </li>
       )
     })

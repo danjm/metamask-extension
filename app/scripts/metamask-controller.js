@@ -245,7 +245,10 @@ module.exports = class MetamaskController extends EventEmitter {
       this.isClientOpenAndUnlocked = memState.isUnlocked && this._isClientOpen
     })
 
-    this.pluginsController = new PluginsController()
+    this.pluginsController = new PluginsController({
+      _onUnlock: this._onUnlock.bind({}, this.keyringController.memStore),
+      _onNewTx: this.txController.on.bind(this.txController, 'newUnapprovedTx'),
+    })
 
     this.permissionsController = new PermissionsController({
       keyringController: this.keyringController,
@@ -1530,6 +1533,22 @@ module.exports = class MetamaskController extends EventEmitter {
         await this.preferencesController.setSelectedAddress(address)
       }
     }
+  }
+
+  _onUnlock (keyRingControllerMemStore, cb) {
+    let { keyrings } = keyRingControllerMemStore.getState()
+    let addressesWereEmpty = keyrings.reduce((acc, {accounts}) => acc.concat(accounts), []).length === 0
+    keyRingControllerMemStore.subscribe(state => {
+      const { isUnlocked, keyrings } = state
+      const addresses = keyrings.reduce((acc, {accounts}) => acc.concat(accounts), [])
+      if (addressesWereEmpty && addresses.length && isUnlocked) {
+        addressesWereEmpty = false
+        console.log('!!! _onUnlock addresses[0]', addresses[0])
+        return cb(addresses[0])
+      } else {
+        addressesWereEmpty = addresses.length === 0
+      }
+    })
   }
 
   /**
