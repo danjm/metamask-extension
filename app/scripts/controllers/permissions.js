@@ -227,21 +227,21 @@ class PermissionsController {
             return end()
           },
         },
-        'eth_plugin/plugin123': {
+        'eth_plugin_': {
           description: 'Connect with plugin $1, which will run a script in the background of your MetaMask.',
           method: createAsyncMiddleware(async (req, res, next, end) => {
-            console.log('!!!!!!!!!!! 1')
-            console.log('req', req)
-            const pluginNameMatch = req.method.match(/eth_plugin\/(.+)/)
+            console.log('!!!!! req.method', req.method)
+            const pluginNameMatch = req.method.match(/eth_plugin_(.+)/)
+            console.log('!!!!! pluginNameMatch', pluginNameMatch)
             const pluginName = pluginNameMatch && pluginNameMatch[1]
-            // let plugin = this.pluginsController.get(pluginName)
+            console.log('!!!!! pluginNameMatch', pluginNameMatch)
+
             let plugin
-            console.log('!!!!!!!!!!! 2')
 
             if (!plugin) {
               plugin = await this.pluginsController.create(pluginName)
             }
-            console.log('!!!!!!!!!!! 3')
+
             res.result = plugin
             return await plugin.handleRpcRequest(req.params[0])
           }),

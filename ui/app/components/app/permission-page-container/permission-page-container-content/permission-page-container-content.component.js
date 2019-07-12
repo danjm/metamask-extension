@@ -62,20 +62,31 @@ export default class PermissionPageContainerContent extends PureComponent {
     const requestedMethods = Object.keys(request.permissions)
 
     const items = requestedMethods.map((methodName) => {
-      const matchingFuncs = permissionsDescriptions.filter((perm) => {
-        return perm.method === methodName
+      console.log('!!!! permissionsDescriptions', permissionsDescriptions)
+      console.log('!!!! methodName', methodName)
+      const match = permissionsDescriptions.find((perm) => {
+        return perm.method === methodName || (methodName.match(/^eth_plugin_[A-z0-9]+/) && perm.method === 'eth_plugin_')
       })
 
-      const match = matchingFuncs[0]
+
       if (!match) {
         throw new Error('Requested unknown permission: ' + methodName)
+      }
+
+      let description = match.description
+      let renderedName = methodName
+
+      const isPluginRequest = (methodName.match(/^eth_plugin_[A-z0-9]+/) && match.method === 'eth_plugin_')
+      if (isPluginRequest) {
+        renderedName = methodName.match(/^eth_plugin_([A-z0-9]+)/)[1]
+        description = description.replace('$1', renderedName)
       }
       return (
         <li
           className="permission-requested"
-          key={methodName}
+          key={renderedName}
           >
-          {match.description}
+          {description}
         </li>
       )
     })

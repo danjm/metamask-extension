@@ -72,7 +72,7 @@ class PluginsController extends EventEmitter {
 
   async _getPluginConfig (pluginName) {
     console.log('!!! pluginName', pluginName)
-    const res = await fetch('http://localhost:8888/plugin123.json')
+    const res = await fetch('http://localhost:8081/plugin123.json')
     console.log('!!!_getPluginSource res', res)
     const json = await res.json()
     return json
