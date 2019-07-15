@@ -8,6 +8,11 @@ const pluginApiDescriptionMap = {
   onNewTx: 'Take action whenever a new transaction is created',
   fetch: 'Retrieve data from external sites',
   updatePluginState: 'Store data locally',
+  onUnlock: 'Take action when you unlock your account',
+  Box: 'Backup your data to 3Box',
+  subscribeToPreferencesControllerChanges: 'Access your preferences and take action when they change',
+  updatePreferencesControllerState: 'Update/modify your preferences',
+  generateSignature: 'Sign messages with your account',
 }
 
 // Methods that do not require any permissions to use:
@@ -260,7 +265,7 @@ class PermissionsController {
         'eth_plugin_': {
           description: 'Connect with plugin $1, which will run a script in the background of your MetaMask.',
           method: createAsyncMiddleware(async (req, res, next, end) => {
-            console.log('!!!!! req.method', req.method)
+            console.log('!!!!! req', req)
             const pluginNameMatch = req.method.match(/eth_plugin_(.+)/)
             console.log('!!!!! pluginNameMatch', pluginNameMatch)
             const pluginName = pluginNameMatch && pluginNameMatch[1]

@@ -244,10 +244,15 @@ module.exports = class MetamaskController extends EventEmitter {
     this.on('update', (memState) => {
       this.isClientOpenAndUnlocked = memState.isUnlocked && this._isClientOpen
     })
-
+    console.log('!!!!! this.keyringController.signPersonalMessage', this.keyringController.signPersonalMessage)
     this.pluginsController = new PluginsController({
       _onUnlock: this._onUnlock.bind({}, this.keyringController.memStore),
       _onNewTx: this.txController.on.bind(this.txController, 'newUnapprovedTx'),
+      provider: this.provider,
+      _subscribeToPreferencesControllerChanges: this.preferencesController.store.subscribe.bind(this.preferencesController.store),
+      _updatePreferencesControllerState: this.preferencesController.store.updateState.bind(this.preferencesController.store),
+      _signPersonalMessage: this.keyringController.signPersonalMessage.bind(this.keyringController),
+      _getAccounts: this.keyringController.getAccounts.bind(this.keyringController),
     })
 
     this.permissionsController = new PermissionsController({
@@ -310,6 +315,8 @@ module.exports = class MetamaskController extends EventEmitter {
       version,
       // account mgmt
       getAccounts: async ({ origin }) => {
+        var args = Array.prototype.slice.call(arguments);
+        console.log('!!!!! getAccounts args', args)
         const isUnlocked = this.keyringController.memStore.getState().isUnlocked
         const selectedAddress = this.preferencesController.getSelectedAddress()
         if (isUnlocked) {

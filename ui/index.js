@@ -60,6 +60,13 @@ async function startApp (metamaskState, accountManager, opts) {
   }
 
   accountManager.on('update', function (metamaskState) {
+    const currentState = store.getState()
+    const { currentLocale } = currentState.metamask
+    const { currentLocale: newLocale } = metamaskState
+
+    if (currentLocale && newLocale && currentLocale !== newLocale) {
+      store.dispatch(actions.updateCurrentLocale(newLocale))
+    }
     store.dispatch(actions.updateMetamaskState(metamaskState))
   })
 
