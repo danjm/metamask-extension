@@ -21,6 +21,7 @@ const createSubscriptionManager = require('eth-json-rpc-filters/subscriptionMana
 const createLoggerMiddleware = require('./lib/createLoggerMiddleware')
 const createOriginMiddleware = require('./lib/createOriginMiddleware')
 const providerAsMiddleware = require('eth-json-rpc-middleware/providerAsMiddleware')
+const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 const {setupMultiplex} = require('./lib/stream-utils.js')
 const KeyringController = require('eth-keyring-controller')
 const NetworkController = require('./controllers/network')
@@ -246,9 +247,9 @@ module.exports = class MetamaskController extends EventEmitter {
     })
     console.log('!!!!! this.keyringController.signPersonalMessage', this.keyringController.signPersonalMessage)
     this.pluginsController = new PluginsController({
+      setupProvider: this.setupProvider.bind(this),
       _onUnlock: this._onUnlock.bind({}, this.keyringController.memStore),
       _onNewTx: this.txController.on.bind(this.txController, 'newUnapprovedTx'),
-      provider: this.provider,
       _subscribeToPreferencesControllerChanges: this.preferencesController.store.subscribe.bind(this.preferencesController.store),
       _updatePreferencesControllerState: this.preferencesController.store.updateState.bind(this.preferencesController.store),
       _signPersonalMessage: this.keyringController.signPersonalMessage.bind(this.keyringController),
@@ -1408,6 +1409,7 @@ module.exports = class MetamaskController extends EventEmitter {
    * A method for serving our ethereum provider over a given stream.
    * @param {*} outStream - The stream to provide over.
    * @param {string} origin - The URI of the requesting resource.
+   * @param {Function<Promise<{ name:string, icon?: string }>>} publicApi.getSiteMetadata - A function for getting display data related to this origin. Icon can be a URL, or eventually hopefully some kind of data hash.
    */
   setupProviderConnection (outStream, origin, publicApi) {
     const getSiteMetadata = publicApi && publicApi.getSiteMetadata
@@ -1430,6 +1432,16 @@ module.exports = class MetamaskController extends EventEmitter {
         if (err) log.error(err)
       }
     )
+  }
+
+  /**
+   * @param string origin - A unique string representing this remote entity. Should apply the web's same-origin policies to this string.
+   * @param {Function<Promise<{ name:string, icon?: string }>>} getSiteMetadata - A function for getting display data related to this origin. Icon can be a URL, or eventually hopefully some kind of data hash.
+   **/
+  setupProvider (origin, getSiteMetadata) {
+    const engine = this.setupProviderEngine(origin, getSiteMetadata);
+    const provider = providerFromEngine(engine);
+    return provider;
   }
 
   /**
