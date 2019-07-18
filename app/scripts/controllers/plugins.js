@@ -3,6 +3,7 @@ const EventEmitter = require('safe-event-emitter')
 const extend = require('xtend')
 const SES = require('ses')
 const Box = require('3box/dist/3box.min')
+const Capnode = require('capnode').default
 
 class PluginsController extends EventEmitter {
 
@@ -14,14 +15,15 @@ class PluginsController extends EventEmitter {
     }, opts.initState)
     this.store = new ObservableStore(initState)
 
-    this.setupProvider = opts.setupProvider
     console.log('!!!!! opts', opts)
+    this.setupProvider = opts.setupProvider
     this._onUnlock = opts._onUnlock
     this._onNewTx = opts._onNewTx
     this._subscribeToPreferencesControllerChanges = opts._subscribeToPreferencesControllerChanges
     this._updatePreferencesControllerState = opts._updatePreferencesControllerState
     this._signPersonalMessage = opts._signPersonalMessage
     this._getAccounts = opts._getAccounts
+    this._plugins = new Map();
   }
 
   get (pluginName) {
@@ -45,10 +47,6 @@ class PluginsController extends EventEmitter {
 
   async create (pluginName) {
     const plugins = this.store.getState().plugins
-
-    // if (plugins[pluginName]) {
-    //   return plugins[pluginName]
-    // }
 
     const { source, uiWrappers, requestedAPIs } = await this._getPluginConfig(pluginName)
     const accounts = await this._getAccounts()
@@ -102,6 +100,18 @@ class PluginsController extends EventEmitter {
     return apisToProvide
   }
 
+  /**
+   * A method for sites and other plugins to request a capnode-compatible API from a plugin.
+   */
+  async connectToPlugin (requestingDomain, pluginName) {
+    const approved = prompt(`Allow ${requestingDomain} to connect to ${name}?`)
+    if (!approved) { throw 'Unauthroized' }
+    const plugin = this.plugins.get(pluginName);
+    if (!plugin) { throw `Plugin not found: ${pluginName}` }
+    if (!plugin.getApiFor) { throw `Plugin does not support exporting an API.` }
+    return plugin.getApiFor(requestingDomain);
+  }
+
   _startPlugin (pluginName, source, requestedAPIs, address) {
     const s = SES.makeSESRootRealm({consoleMode: 'allow', errorStackMode: 'allow', mathRandomMode: 'allow'})
     const newPluginSessified = s.evaluate(source, {
@@ -111,7 +121,8 @@ class PluginsController extends EventEmitter {
       },
       ethereumProvider: this.setupProvider(pluginName, async () => { return {name: pluginName } }),
     })
-    newPluginSessified()
+    const plugin = newPluginSessified()
+    this.plugins.set(pluginName, plugin)
     this._setPluginToActive(pluginName)
   }
 

@@ -247,7 +247,7 @@ module.exports = class MetamaskController extends EventEmitter {
     })
     console.log('!!!!! this.keyringController.signPersonalMessage', this.keyringController.signPersonalMessage)
     this.pluginsController = new PluginsController({
-      setupProvider: this.setupProvider.bind(this),
+      setupProvider: this.setupLocalProvider.bind(this),
       _onUnlock: this._onUnlock.bind({}, this.keyringController.memStore),
       _onNewTx: this.txController.on.bind(this.txController, 'newUnapprovedTx'),
       _subscribeToPreferencesControllerChanges: this.preferencesController.store.subscribe.bind(this.preferencesController.store),
@@ -311,6 +311,11 @@ module.exports = class MetamaskController extends EventEmitter {
           return async (message) => {
             alert('background sez ' + message);
           }
+        },
+        connectToModule: async (name) => {
+          const approved = prompt(`Allow connection to ${name}?`)
+          if (!approved) { throw 'Unauthroized' }
+          return this.pluginsController.apiRequestFrom(origin)
         },
       }
     })
@@ -1462,6 +1467,36 @@ module.exports = class MetamaskController extends EventEmitter {
     const engine = this.setupProviderEngine(origin, getSiteMetadata);
     const provider = providerFromEngine(engine);
     return provider;
+  }
+
+  setupLocalProvider (origin, getSiteMetadata) {
+    const provider = this.setupProvider(origin, getSiteMetadata)
+    const hostCapnode = new Capnode({
+
+    })
+    const capnode = new Capnode({})
+    const localCap = capnode.createRemote()
+    provider.getIndex = () => {
+      const remote = this.capnode.createRemote();
+      pump(remote, localCap, remote, (err) => {
+        this.capnode.clearRemote(remote);
+      })
+      return capnode.requestIndex(localCap)
+    }
+    return provider
+  }
+
+  async getApiFor (domain) {
+    return {
+      foo: async () => 'BAR!',
+      ping: async () => 'pong',
+      getAlerter: async (opts) => {
+        return async (message) => {
+          alert('background sez ' + message);
+        }
+      },
+      connectToPlugin: this.pluginsController.connectToPlugin.bind(this.pluginsController, domain),
+    }
   }
 
   /**
