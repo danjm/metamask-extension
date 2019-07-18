@@ -62,7 +62,7 @@ const {
   PhishingController,
 } = require('gaba')
 const backEndMetaMetricsEvent = require('./lib/backend-metametrics')
-
+import Capnode from 'capnode'
 
 module.exports = class MetamaskController extends EventEmitter {
 
@@ -302,6 +302,18 @@ module.exports = class MetamaskController extends EventEmitter {
       PluginsController: this.pluginsController.store,
     })
     this.memStore.subscribe(this.sendUpdate.bind(this))
+
+    this.capnode = new Capnode({
+      index: {
+        foo: async () => 'BAR!',
+        ping: async () => 'pong',
+        getAlerter: async (opts) => {
+          return async (message) => {
+            alert('background sez ' + message);
+          }
+        },
+      }
+    })
   }
 
   /**
@@ -1338,6 +1350,7 @@ module.exports = class MetamaskController extends EventEmitter {
     const publicApi = this.setupPublicApi(mux.createStream('publicApi'), originDomain)
     this.setupProviderConnection(mux.createStream('provider'), originDomain, publicApi)
     this.setupPublicConfig(mux.createStream('publicConfig'), originDomain)
+    this.setupCapnodeConnection(mux.createStream('cap'), originDomain)
   }
 
   /**
@@ -1356,6 +1369,13 @@ module.exports = class MetamaskController extends EventEmitter {
     // connect features
     this.setupControllerConnection(mux.createStream('controller'))
     this.setupProviderConnection(mux.createStream('provider'), originDomain)
+  }
+
+  setupCapnodeConnection(outStream, originDomain) {
+    const remote = this.capnode.createRemote();
+    pump(remote, outStream, remote, (err) => {
+      this.capnode.clearRemote(remote);
+    })
   }
 
   /**
