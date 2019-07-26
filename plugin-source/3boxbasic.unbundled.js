@@ -1,3 +1,4 @@
+let theBox;
 (function () {
   new3Box(pluginData.address)
   // pluginAPIs.onUnlock(
@@ -41,6 +42,7 @@
         }
       ))
       .then(box => {
+        theBox = box;
         box.onSyncDone(() => {
           restoreFrom3Box(box, address);
           console.log('3boxbasic new3Box 2:', `address:${address} box:${box}`);
@@ -48,4 +50,10 @@
         })
       })
   }
+  return {
+    getApiFor: (domain) => {
+      console.log('3box plugin received api request from ' + domain);
+      return theBox;
+    }
+  };
 })
