@@ -14,7 +14,7 @@ class PluginsController extends EventEmitter {
     }, opts.initState)
     this.store = new ObservableStore(initState)
 
-    this.provider = opts.provider
+    this.setupProvider = opts.setupProvider
     console.log('!!!!! opts', opts)
     this._onUnlock = opts._onUnlock
     this._onNewTx = opts._onNewTx
@@ -109,7 +109,7 @@ class PluginsController extends EventEmitter {
       pluginData: {
         address,
       },
-      ethereumProvider: this.provider,
+      ethereumProvider: this.setupProvider(pluginName, async () => { return {name: pluginName } }),
     })
     newPluginSessified()
     this._setPluginToActive(pluginName)
