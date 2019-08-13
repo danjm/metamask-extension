@@ -21,6 +21,7 @@ const createSubscriptionManager = require('eth-json-rpc-filters/subscriptionMana
 const createLoggerMiddleware = require('./lib/createLoggerMiddleware')
 const createOriginMiddleware = require('./lib/createOriginMiddleware')
 const providerAsMiddleware = require('eth-json-rpc-middleware/providerAsMiddleware')
+const providerFromEngine = require('eth-json-rpc-middleware/providerFromEngine')
 const {setupMultiplex} = require('./lib/stream-utils.js')
 const KeyringController = require('eth-keyring-controller')
 const NetworkController = require('./controllers/network')
@@ -37,6 +38,7 @@ const BalancesController = require('./controllers/computed-balances')
 const TokenRatesController = require('./controllers/token-rates')
 const DetectTokensController = require('./controllers/detect-tokens')
 const PermissionsController = require('./controllers/permissions')
+const PluginsController = require('./controllers/plugins')
 const nodeify = require('./lib/nodeify')
 const accountImporter = require('./account-import-strategies')
 const getBuyEthUrl = require('./lib/buy-eth-url')
@@ -243,11 +245,22 @@ module.exports = class MetamaskController extends EventEmitter {
     this.on('update', (memState) => {
       this.isClientOpenAndUnlocked = memState.isUnlocked && this._isClientOpen
     })
+    console.log('!!!!! this.keyringController.signPersonalMessage', this.keyringController.signPersonalMessage)
+    this.pluginsController = new PluginsController({
+      setupProvider: this.setupProvider.bind(this),
+      _onUnlock: this._onUnlock.bind({}, this.keyringController.memStore),
+      _onNewTx: this.txController.on.bind(this.txController, 'newUnapprovedTx'),
+      _subscribeToPreferencesControllerChanges: this.preferencesController.store.subscribe.bind(this.preferencesController.store),
+      _updatePreferencesControllerState: this.preferencesController.store.updateState.bind(this.preferencesController.store),
+      _signPersonalMessage: this.keyringController.signPersonalMessage.bind(this.keyringController),
+      _getAccounts: this.keyringController.getAccounts.bind(this.keyringController),
+    })
 
     this.permissionsController = new PermissionsController({
       keyringController: this.keyringController,
       openPopup: opts.openPopup,
       closePopup: opts.closePopup,
+      pluginsController: this.pluginsController,
     },
     // TOOD: Persist/restore state here:
     {})
@@ -264,6 +277,7 @@ module.exports = class MetamaskController extends EventEmitter {
       InfuraController: this.infuraController.store,
       CachedBalancesController: this.cachedBalancesController.store,
       PermissionsController: this.permissionsController.permissions,
+      PluginsController: this.pluginsController.store,
     })
 
     this.memStore = new ComposableObservableStore(null, {
@@ -285,6 +299,7 @@ module.exports = class MetamaskController extends EventEmitter {
       ShapeshiftController: this.shapeshiftController,
       InfuraController: this.infuraController.store,
       PermissionsController: this.permissionsController.permissions,
+      PluginsController: this.pluginsController.store,
     })
     this.memStore.subscribe(this.sendUpdate.bind(this))
   }
@@ -301,6 +316,8 @@ module.exports = class MetamaskController extends EventEmitter {
       version,
       // account mgmt
       getAccounts: async ({ origin }) => {
+        var args = Array.prototype.slice.call(arguments);
+        console.log('!!!!! getAccounts args', args)
         const isUnlocked = this.keyringController.memStore.getState().isUnlocked
         const selectedAddress = this.preferencesController.getSelectedAddress()
         if (isUnlocked) {
@@ -1392,8 +1409,45 @@ module.exports = class MetamaskController extends EventEmitter {
    * A method for serving our ethereum provider over a given stream.
    * @param {*} outStream - The stream to provide over.
    * @param {string} origin - The URI of the requesting resource.
+   * @param {Function<Promise<{ name:string, icon?: string }>>} publicApi.getSiteMetadata - A function for getting display data related to this origin. Icon can be a URL, or eventually hopefully some kind of data hash.
    */
   setupProviderConnection (outStream, origin, publicApi) {
+    const getSiteMetadata = publicApi && publicApi.getSiteMetadata
+    const engine = this.setupProviderEngine(origin, getSiteMetadata)
+
+    // setup connection
+    const providerStream = createEngineStream({ engine })
+
+    pump(
+      outStream,
+      providerStream,
+      outStream,
+      (err) => {
+        // cleanup filter polyfill middleware
+        engine._middleware.forEach((mid) => {
+          if (mid.destroy && typeof mid.destroy === 'function') {
+            mid.destroy()
+          }
+        })
+        if (err) log.error(err)
+      }
+    )
+  }
+
+  /**
+   * @param string origin - A unique string representing this remote entity. Should apply the web's same-origin policies to this string.
+   * @param {Function<Promise<{ name:string, icon?: string }>>} getSiteMetadata - A function for getting display data related to this origin. Icon can be a URL, or eventually hopefully some kind of data hash.
+   **/
+  setupProvider (origin, getSiteMetadata) {
+    const engine = this.setupProviderEngine(origin, getSiteMetadata);
+    const provider = providerFromEngine(engine);
+    return provider;
+  }
+
+  /**
+   * A method for creating a provider that is safely restricted for the requesting domain.
+   **/
+  setupProviderEngine (origin, getSiteMetadata) {
     // setup json rpc engine stack
     const engine = new RpcEngine()
     const provider = this.provider
@@ -1401,6 +1455,7 @@ module.exports = class MetamaskController extends EventEmitter {
 
     // create filter polyfill middleware
     const filterMiddleware = createFilterMiddleware({ provider, blockTracker })
+
     // create subscription polyfill middleware
     const subscriptionManager = createSubscriptionManager({ provider, blockTracker })
     subscriptionManager.events.on('notification', (message) => engine.emit('notification', message))
@@ -1415,27 +1470,14 @@ module.exports = class MetamaskController extends EventEmitter {
     // permissions
     engine.push(this.permissionsController.createMiddleware({
       origin,
-      getSiteMetadata: publicApi && publicApi.getSiteMetadata,
+      getSiteMetadata,
     }))
     // watch asset
     engine.push(this.preferencesController.requestWatchAsset.bind(this.preferencesController))
 
     // forward to metamask primary provider
     engine.push(providerAsMiddleware(provider))
-
-    // setup connection
-    const providerStream = createEngineStream({ engine })
-
-    pump(
-      outStream,
-      providerStream,
-      outStream,
-      (err) => {
-        // cleanup filter polyfill middleware
-        filterMiddleware.destroy()
-        if (err) log.error(err)
-      }
-    )
+    return engine
   }
 
   /**
@@ -1524,6 +1566,22 @@ module.exports = class MetamaskController extends EventEmitter {
         await this.preferencesController.setSelectedAddress(address)
       }
     }
+  }
+
+  _onUnlock (keyRingControllerMemStore, cb) {
+    let { keyrings } = keyRingControllerMemStore.getState()
+    let addressesWereEmpty = keyrings.reduce((acc, {accounts}) => acc.concat(accounts), []).length === 0
+    keyRingControllerMemStore.subscribe(state => {
+      const { isUnlocked, keyrings } = state
+      const addresses = keyrings.reduce((acc, {accounts}) => acc.concat(accounts), [])
+      if (addressesWereEmpty && addresses.length && isUnlocked) {
+        addressesWereEmpty = false
+        console.log('!!! _onUnlock addresses[0]', addresses[0])
+        return cb(addresses[0])
+      } else {
+        addressesWereEmpty = addresses.length === 0
+      }
+    })
   }
 
   /**
@@ -1802,3 +1860,4 @@ module.exports = class MetamaskController extends EventEmitter {
     return this.keyringController.setLocked()
   }
 }
+

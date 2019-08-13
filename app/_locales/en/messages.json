@@ -562,6 +562,12 @@
   "endOfFlowMessage8": {
     "message": "MetaMask cannot recover your seedphrase. Learn more."
   },
+  "endOfFlowMessage9": {
+    "message": "Learn more."
+  },
+  "endOfFlowMessage10": {
+    "message": "All Done"
+  },
   "ensNameNotFound": {
     "message": "ENS name not found"
   },
@@ -1176,7 +1182,7 @@
     "message": "Queue"
   },
   "readdToken": {
-    "message": "You can add this token back in the future by going go to “Add token” in your accounts options menu."
+    "message": "You can add this token back in the future by going to “Add token” in your accounts options menu."
   },
   "readMore": {
     "message": "Read more here."
@@ -1814,6 +1820,6 @@
     "message": "MetaMask will never ask for your seed phrase!"
   },
   "zeroGasPriceOnSpeedUpError": {
-    "message":"Zero gas price on speed up"
+    "message": "Zero gas price on speed up"
   }
 }

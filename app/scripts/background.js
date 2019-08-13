@@ -30,6 +30,7 @@ const EdgeEncryptor = require('./edge-encryptor')
 const getFirstPreferredLangCode = require('./lib/get-first-preferred-lang-code')
 const getObjStructure = require('./lib/getObjStructure')
 const setupEnsIpfsResolver = require('./lib/ens-ipfs/setup')
+// const SES = require('ses')
 
 const {
   ENVIRONMENT_TYPE_POPUP,
@@ -163,6 +164,11 @@ async function initialize () {
   await setupController(initState, initLangCode)
   log.debug('MetaMask initialization complete.')
 }
+// Somehwere in this script:
+  // Retrieve all plugin names from state
+  // run the plugins scripts that have been approved, according to the permissions controller
+// We are only running the script on approved domains, so maybe this needs to be in the inpage script?
+
 
 //
 // State and Persistence
@@ -279,6 +285,15 @@ function setupController (initState, initLangCode) {
       console.error(e)
     }
   })
+
+  // controller.pluginsController.on('new-plugin', ({ source, pluginName }) => {
+  //   const s = SES.makeSESRootRealm({consoleMode: 'allow', errorStackMode: 'allow', mathRandomMode: 'allow'})
+  //   console.log('provider', provider)
+  //   const updatePluginState = controller.pluginsController.updatePluginState.bind(controller.pluginsController, pluginName)
+  //   const newPluginSessified = s.evaluate(source, { updatePluginState })
+  //   console.log('newPluginSessified', newPluginSessified)
+  //   newPluginSessified(controller, fetch)
+  // })
 
   // setup state persistence
   pump(

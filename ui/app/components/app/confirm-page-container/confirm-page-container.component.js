@@ -100,6 +100,7 @@ export default class ConfirmPageContainer extends Component {
       lastTx,
       ofText,
       requestsWaitingText,
+      plugins,
     } = this.props
     const renderAssetImage = contentComponent || (!contentComponent && !identiconAddress)
 
@@ -127,6 +128,7 @@ export default class ConfirmPageContainer extends Component {
             recipientName={toName}
             recipientAddress={toAddress}
             assetImage={renderAssetImage ? assetImage : undefined}
+            plugins={plugins}
           />
         </ConfirmPageContainerHeader>
         {

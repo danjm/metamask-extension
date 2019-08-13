@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+
+  <head>
+    <title>Plugins Test</title>
+    <link rel="shortcut icon" href="/favicon.ico">
+  </head>
+
+  <body>
+    <h1>Welcome to our Plugins Test Site!</h1>
+    <p id="content">
+      You'll need to log in to get started.
+    </p>
+
+    <button id="enable">Enable</button>
+    <button id="installPlugin">Install Recipient Audit Plugin</button>
+    <button id="install3BoxPlugin">Install 3Box Plugin</button>
+
+    <br/>
+
+  </body>
+
+  <script>
+    installPlugin.addEventListener('click', function() {
+      requestPerms({
+        eth_plugin_plugin123: {},
+      })
+    })
+    install3BoxPlugin.addEventListener('click', function() {
+      requestPerms({
+        eth_plugin_3boxbasic: {},
+      })
+    })
+    enable.addEventListener('click', function() {
+      if (!window.ethereum) throw new Error('no window.ethereum')
+      window.ethereum.enable().then(res => console.log('ethereum.enable(): ', res))
+    })
+
+    async function requestPerms (perms) {
+      ethereum.sendAsync({
+        method: 'wallet_requestPermissions',
+        jsonrpc: '2.0',
+        params: [perms],
+      }, (err, res) => {
+        console.dir({ err, res })
+        if (err) return alert('error!: ' + err)
+
+        if (res.error) {
+          return showError(res)
+        }
+
+        runPlugin(Object.keys(perms)[0])
+      })
+    }
+
+    function runPlugin (pluginKey) {
+      ethereum.sendAsync({
+        method: pluginKey,
+        params: [],
+      }, (err, result) => {
+        console.dir({ message: 'pluginKey callback', err, result })
+        if (err) return alert('error!: ' + err) && rej(err)
+        let message = ''
+        if (result.error) {
+          message = 'Site is unauthorized to run plugin.'
+        } else {
+          message = `${pluginKey} is running` // JSON.stringify(result.result)
+        }
+        content.innerText = message
+      })
+    }
+
+    function showError (res) {
+      content.innerText = `Had a problem: ${res.error.message}`
+    }
+  </script>
+
+</html>

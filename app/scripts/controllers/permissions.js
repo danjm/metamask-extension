@@ -4,6 +4,17 @@ const createAsyncMiddleware = require('json-rpc-engine/src/createAsyncMiddleware
 const RpcCap = require('json-rpc-capabilities-middleware').CapabilitiesController
 const uuid = require('uuid/v4')
 
+const pluginApiDescriptionMap = {
+  onNewTx: 'Take action whenever a new transaction is created',
+  fetch: 'Retrieve data from external sites',
+  updatePluginState: 'Store data locally',
+  onUnlock: 'Take action when you unlock your account',
+  Box: 'Backup your data to 3Box',
+  subscribeToPreferencesControllerChanges: 'Access your preferences and take action when they change',
+  updatePreferencesControllerState: 'Update/modify your preferences',
+  generateSignature: 'Sign messages with your account',
+}
+
 // Methods that do not require any permissions to use:
 const SAFE_METHODS = require('../lib/permissions-safe-methods.json')
 
@@ -11,13 +22,14 @@ const SAFE_METHODS = require('../lib/permissions-safe-methods.json')
 class PermissionsController {
 
   constructor ({
-    openPopup, closePopup, keyringController,
+    openPopup, closePopup, keyringController, pluginsController,
   } = {}, restoredState) {
     this._openPopup = openPopup
     this._closePopup = closePopup
     this.keyringController = keyringController
     this._initializePermissions(restoredState)
     this.engines = {} // { origin: middleware } map for selectedAddress compatibility
+    this.pluginsController = pluginsController
   }
 
   createMiddleware (options) {
@@ -80,6 +92,30 @@ class PermissionsController {
             site: await getSiteMetadata(),
           },
         }
+
+        const pluginPermissionNames = Object.keys(req.params[0])
+          .filter(key => key.match(/^eth_plugin_(.+)/))
+          .map(key => key.match(/^eth_plugin_(.+)/)[1])
+
+        if (pluginPermissionNames.length) {
+          const pluginPermissionRequestedAPIs = await Promise.all(
+            pluginPermissionNames.map(pluginName => {
+              return fetch(`http://localhost:8081/${pluginName}.json`)
+                .then(res => res.json())
+                .then(({ requestedAPIs }) => {
+                  return {
+                    pluginName,
+                    requestedAPIDescriptions: requestedAPIs.map(n => pluginApiDescriptionMap[n]),
+                  }
+                })
+            }))
+
+          pluginPermissionRequestedAPIs.forEach(({ pluginName, requestedAPIDescriptions }) => {
+            req.params[0]['eth_plugin_' + pluginName]['requestedAPIDescriptions'] = requestedAPIDescriptions
+          })
+
+        }
+
         req.params.push(metadata)
       }
 
@@ -150,6 +186,7 @@ class PermissionsController {
     res(approved.permissions)
     this._closePopup && this._closePopup()
     delete this.pendingApprovals[id]
+    console.log('this.pendingApprovals', this.pendingApprovals)
   }
 
   /**
@@ -212,6 +249,7 @@ class PermissionsController {
           description: 'Read from your profile',
           method: (_req, res, _next, end) => {
             res.result = this.testProfile
+            console.log('!!!!!!!!!!!!!!!!!!', 1111)
             end()
           },
         },
@@ -223,6 +261,25 @@ class PermissionsController {
             res.result = this.testProfile
             return end()
           },
+        },
+        'eth_plugin_': {
+          description: 'Connect with plugin $1, which will run a script in the background of your MetaMask.',
+          method: createAsyncMiddleware(async (req, res, next, end) => {
+            console.log('!!!!! req', req)
+            const pluginNameMatch = req.method.match(/eth_plugin_(.+)/)
+            console.log('!!!!! pluginNameMatch', pluginNameMatch)
+            const pluginName = pluginNameMatch && pluginNameMatch[1]
+            console.log('!!!!! pluginNameMatch', pluginNameMatch)
+
+            let plugin
+
+            if (!plugin) {
+              plugin = await this.pluginsController.create(pluginName)
+            }
+
+            res.result = plugin
+            return await plugin.handleRpcRequest(req.params[0])
+          }),
         },
       },
 

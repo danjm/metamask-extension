@@ -6,6 +6,7 @@ import Tooltip from '../tooltip-v2'
 import copyToClipboard from 'copy-to-clipboard'
 import { DEFAULT_VARIANT, CARDS_VARIANT, FLAT_VARIANT } from './sender-to-recipient.constants'
 import { checksumAddress } from '../../../helpers/utils/util'
+import RecipientAddress from './recipient-address.component'
 
 const variantHash = {
   [DEFAULT_VARIANT]: 'sender-to-recipient--default',
@@ -25,6 +26,7 @@ export default class SenderToRecipient extends PureComponent {
     assetImage: PropTypes.string,
     onRecipientClick: PropTypes.func,
     onSenderClick: PropTypes.func,
+    plugins: PropTypes.object,
   }
 
   static defaultProps = {
@@ -88,7 +90,7 @@ export default class SenderToRecipient extends PureComponent {
 
   renderRecipientWithAddress () {
     const { t } = this.context
-    const { recipientName, recipientAddress, addressOnly, onRecipientClick } = this.props
+    const { recipientName, recipientAddress, addressOnly, onRecipientClick, plugins } = this.props
     const checksummedRecipientAddress = checksumAddress(recipientAddress)
 
     return (
@@ -110,13 +112,13 @@ export default class SenderToRecipient extends PureComponent {
           containerClassName="sender-to-recipient__tooltip-container"
           onHidden={() => this.setState({ recipientAddressCopied: false })}
         >
-          <div className="sender-to-recipient__name">
-            {
-              addressOnly
-                ? `${t('to')}: ${checksummedRecipientAddress}`
-                : (recipientName || this.context.t('newContract'))
-            }
-          </div>
+          <RecipientAddress
+            address={checksummedRecipientAddress}
+            addressOnly={addressOnly}
+            recipientName={recipientName}
+            plugins={plugins}
+            pluginWrapperId={'senderToRecipient-recipient'}
+          />
         </Tooltip>
       </div>
     )
