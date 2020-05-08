@@ -5,7 +5,33 @@ import TextField from '../../components/ui/text-field'
 import getCaretCoordinates from 'textarea-caret'
 import { EventEmitter } from 'events'
 import Mascot from '../../components/ui/mascot'
+import foxJSON from '../../../../node_modules/metamask-logo/fox.json'
 import { DEFAULT_ROUTE } from '../../helpers/constants/routes'
+
+var rgbToHex = function (rgb) { 
+  var hex = Number(rgb).toString(16);
+  if (hex.length < 2) {
+       hex = "0" + hex;
+  }
+  return hex;
+};
+
+var fullColorHex = function(r,g,b) {   
+  var red = rgbToHex(r);
+  var green = rgbToHex(g);
+  var blue = rgbToHex(b);
+  return '#'+red+green+blue;
+};
+
+var hexToRGB = function (hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+    ]
+  : null;
+}
 
 export default class UnlockPage extends Component {
   static contextTypes = {
@@ -38,6 +64,11 @@ export default class UnlockPage extends Component {
     if (isUnlocked) {
       history.push(DEFAULT_ROUTE)
     }
+
+    const colors = Object.entries(foxJSON.chunks).map(([key, {color}]) => color)
+
+    this.setState({colors})
+    console.log('colors', colors)
   }
 
   handleSubmit = async (event) => {
@@ -133,7 +164,7 @@ export default class UnlockPage extends Component {
   }
 
   render () {
-    const { password, error } = this.state
+    const { password, error, colors } = this.state
     const { t } = this.context
     const { onImport, onRestore } = this.props
 
@@ -145,6 +176,7 @@ export default class UnlockPage extends Component {
               animationEventEmitter={this.animationEventEmitter}
               width="120"
               height="120"
+              colors={colors}
             />
           </div>
           <h1 className="unlock-page__title">
@@ -182,6 +214,20 @@ export default class UnlockPage extends Component {
             >
               { t('importUsingSeed') }
             </div>
+          </div>
+          <div className="fox-color-squares">
+            {colors.map((color, i) => {
+              return <input
+                type="color"
+                className="fox-color-square"
+                value={fullColorHex(...color)}
+                onChange={event => {
+                  const newColors = [...colors]
+                  newColors[i] = hexToRGB(event.target.value)
+                  this.setState({ colors: newColors })
+                }}
+              />
+            })}
           </div>
         </div>
       </div>

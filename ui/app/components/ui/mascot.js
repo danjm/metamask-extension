@@ -20,6 +20,7 @@ export default class Mascot extends Component {
       pxNotRatio: true,
       width,
       height,
+      colors: props.colors
     })
 
     this.mascotContainer = createRef()
@@ -53,6 +54,13 @@ export default class Mascot extends Component {
     this.animations.removeAllListeners()
     this.logo.container.remove()
     this.logo.stopAnimation()
+  }
+
+  componentDidUpdate (prevProps) {
+    if (JSON.stringify(prevProps.colors) !== JSON.stringify(this.props.colors)) {
+      console.log('!!!')
+      this.logo.reRender(this.props.colors)
+    }
   }
 
   render () {
