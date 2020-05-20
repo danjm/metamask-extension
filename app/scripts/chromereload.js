@@ -794,7 +794,10 @@ window.LiveReloadOptions = { host: 'localhost' };
       }
 
       Reloader.prototype.reloadPage = function () {
-        return this.window.document.location.reload()
+        // this.window.document.location.reload()
+        setTimeout(() => chrome.tabs.query ({ active: true }, tabs => { 
+            if (tabs[0]) { chrome.tabs.reload (tabs[0].id) }
+        }), 1000)
       }
 
       Reloader.prototype.reloadImages = function (path) {

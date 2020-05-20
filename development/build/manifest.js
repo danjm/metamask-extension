@@ -29,6 +29,7 @@ function createManifestTasks ({ browserPlatforms }) {
   const envDev = createTaskForModifyManifestForEnvironment((manifest) => {
     const scripts = manifest.background.scripts.filter((scriptName) => !scriptsToExcludeFromBackgroundDevBuild[scriptName])
     scripts.push('chromereload.js')
+    // scripts.push('hot-reload.js')
     manifest.background = {
       ...manifest.background,
       scripts,
@@ -39,7 +40,7 @@ function createManifestTasks ({ browserPlatforms }) {
   // testDev: remove bg-libs, add perms
   const envTestDev = createTaskForModifyManifestForEnvironment((manifest) => {
     const scripts = manifest.background.scripts.filter((scriptName) => !scriptsToExcludeFromBackgroundDevBuild[scriptName])
-    scripts.push('chromereload.js')
+    // scripts.push('hot-reload.js')
     manifest.background = {
       ...manifest.background,
       scripts,

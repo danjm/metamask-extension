@@ -581,6 +581,10 @@ export default class PreferencesController {
     return Promise.resolve(updatedFeatureFlags)
   }
 
+  selectFoxIcon (fox) {
+    this.store.updateState({ selectedFox: fox })
+  }
+
   /**
    * Updates the `preferences` property, which is an object. These are user-controlled features
    * found in the settings page.

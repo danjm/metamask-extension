@@ -215,20 +215,6 @@ export default class UnlockPage extends Component {
               { t('importUsingSeed') }
             </div>
           </div>
-          <div className="fox-color-squares">
-            {colors.map((color, i) => {
-              return <input
-                type="color"
-                className="fox-color-square"
-                value={fullColorHex(...color)}
-                onChange={event => {
-                  const newColors = [...colors]
-                  newColors[i] = hexToRGB(event.target.value)
-                  this.setState({ colors: newColors })
-                }}
-              />
-            })}
-          </div>
         </div>
       </div>
     )

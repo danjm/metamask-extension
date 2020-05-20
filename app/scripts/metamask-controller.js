@@ -495,6 +495,7 @@ export default class MetamaskController extends EventEmitter {
       removeSuggestedTokens: nodeify(preferencesController.removeSuggestedTokens, preferencesController),
       setAccountLabel: nodeify(preferencesController.setAccountLabel, preferencesController),
       setFeatureFlag: nodeify(preferencesController.setFeatureFlag, preferencesController),
+      selectFoxIcon: nodeify(preferencesController.selectFoxIcon, preferencesController),
       setPreference: nodeify(preferencesController.setPreference, preferencesController),
       completeOnboarding: nodeify(preferencesController.completeOnboarding, preferencesController),
       addKnownMethodData: nodeify(preferencesController.addKnownMethodData, preferencesController),

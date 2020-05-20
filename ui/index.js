@@ -92,6 +92,9 @@ async function startApp (metamaskState, backgroundConnection, opts) {
     },
   }
 
+  !metamaskState.isUnlocked && await store.dispatch(actions.tryUnlockMetamask('qqqqqqqq'))
+
+
   // start app
   render(
     <Root

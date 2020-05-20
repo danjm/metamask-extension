@@ -18,6 +18,7 @@ import RestoreVaultPage from '../keychains/restore-vault'
 import RevealSeedConfirmation from '../keychains/reveal-seed'
 import MobileSyncPage from '../mobile-sync'
 import AddTokenPage from '../add-token'
+import MetaFoxies from '../meta-foxies'
 import ConfirmAddTokenPage from '../confirm-add-token'
 import ConfirmAddSuggestedTokenPage from '../confirm-add-suggested-token'
 import CreateAccountPage from '../create-account'
@@ -123,6 +124,7 @@ export default class Routes extends Component {
         <Authenticated path={SEND_ROUTE} component={SendTransactionScreen} exact />
         <Authenticated path={ADD_TOKEN_ROUTE} component={AddTokenPage} exact />
         <Authenticated path={CONFIRM_ADD_TOKEN_ROUTE} component={ConfirmAddTokenPage} exact />
+        <Authenticated path={'/metafoxies'} component={MetaFoxies} exact />
         <Authenticated path={CONFIRM_ADD_SUGGESTED_TOKEN_ROUTE} component={ConfirmAddSuggestedTokenPage} exact />
         <Authenticated path={NEW_ACCOUNT_ROUTE} component={CreateAccountPage} />
         <Authenticated path={`${CONNECT_ROUTE}/:id`} component={PermissionsConnect} />

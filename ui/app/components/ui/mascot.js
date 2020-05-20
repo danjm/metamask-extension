@@ -14,9 +14,10 @@ export default class Mascot extends Component {
     super(props)
 
     const { width = '200', height = '200' } = props
-
+    console.log('props.followMouse', props.followMouse)
+    const followMouse = props.followMouse === undefined ? true : props.followMouse
     this.logo = metamaskLogo({
-      followMouse: true,
+      followMouse,
       pxNotRatio: true,
       width,
       height,
@@ -35,8 +36,8 @@ export default class Mascot extends Component {
       return
     }
     this.animations = this.props.animationEventEmitter
-    this.animations.on('point', this.lookAt.bind(this))
-    this.animations.on('setFollowMouse', this.logo.setFollowMouse.bind(this.logo))
+    this.animations && this.animations.on('point', this.lookAt.bind(this))
+    this.animations && this.animations.on('setFollowMouse', this.logo.setFollowMouse.bind(this.logo))
   }
 
   lookAt (target) {
@@ -51,7 +52,7 @@ export default class Mascot extends Component {
 
   componentWillUnmount () {
     this.animations = this.props.animationEventEmitter
-    this.animations.removeAllListeners()
+    this.animations && this.animations.removeAllListeners()
     this.logo.container.remove()
     this.logo.stopAnimation()
   }

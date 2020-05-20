@@ -6,6 +6,7 @@ import contractMap from 'eth-contract-metadata'
 import BlockieIdenticon from './blockieIdenticon'
 import { checksumAddress } from '../../../helpers/utils/util'
 import Jazzicon from '../jazzicon'
+import Mascot from '../mascot'
 
 const getStyles = (diameter) => (
   {
@@ -75,8 +76,27 @@ export default class Identicon extends PureComponent {
     )
   }
 
+  foxIcon () {
+    return (<Mascot
+      width={this.props.diameter}
+      height={this.props.diameter}
+      colors={this.props.foxColors}
+      followMouse={false}
+    />)
+  }
+
+  renderIcon () {
+    if (this.props.useBlockie) {
+      return this.renderBlockie()
+    } else if (this.props.useFox) {
+      return this.foxIcon()
+    } else {
+      return this.renderJazzicon()
+    }
+  }
+
   render () {
-    const { className, address, image, diameter, useBlockie, addBorder } = this.props
+    const { className, address, image, diameter, useBlockie, addBorder, useFox } = this.props
 
     if (image) {
       return this.renderImage()
@@ -90,8 +110,8 @@ export default class Identicon extends PureComponent {
       }
 
       return (
-        <div className={classnames({ 'identicon__address-wrapper': addBorder })}>
-          { useBlockie ? this.renderBlockie() : this.renderJazzicon() }
+        <div className={classnames({ 'identicon__address-wrapper': addBorder, 'identicon__fox': useFox })}>
+          { this.renderIcon() }
         </div>
       )
     }

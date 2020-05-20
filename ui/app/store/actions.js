@@ -2087,6 +2087,12 @@ export function legacyExposeAccounts (origin, accounts) {
   }
 }
 
+export function selectFoxIcon (fox) {
+  return () => {
+    return background.selectFoxIcon(fox)
+  }
+}
+
 /**
  * Clears the given permissions for the given origin.
  */
