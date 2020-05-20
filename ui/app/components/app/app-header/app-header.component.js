@@ -85,11 +85,13 @@ export default class AppHeader extends PureComponent {
       isUnlocked,
       hideNetworkIndicator,
       disabled,
+      customHeaderBackgroud,
     } = this.props
 
     return (
       <div
         className={classnames('app-header', { 'app-header--back-drop': isUnlocked })}
+        styles={{ background: customHeaderBackgroud || '#f2f3f4', }}
       >
         <div className="app-header__contents">
           <MetaFoxLogo

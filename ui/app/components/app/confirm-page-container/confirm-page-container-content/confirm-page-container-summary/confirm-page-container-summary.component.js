@@ -15,6 +15,7 @@ const ConfirmPageContainerSummary = (props) => {
     identiconAddress,
     nonce,
     assetImage,
+    FoxImage,
   } = props
 
   return (
@@ -31,9 +32,12 @@ const ConfirmPageContainerSummary = (props) => {
           )
         }
       </div>
-      <div className="confirm-page-container-summary__title">
+      <div className="confirm-page-container-summary__title"
+        style={{ justifyContent: FoxImage ? 'space-around' : 'flex-start' }}>
         {
-          identiconAddress && (
+          FoxImage
+          ? <FoxImage />
+          : identiconAddress && (
             <Identicon
               className="confirm-page-container-summary__identicon"
               diameter={36}

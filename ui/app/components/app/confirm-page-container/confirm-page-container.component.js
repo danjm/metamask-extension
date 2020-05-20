@@ -1,8 +1,45 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import SenderToRecipient from '../../ui/sender-to-recipient'
+import Mascot from '../../ui/mascot'
 import { PageContainerFooter } from '../../ui/page-container'
 import { ConfirmPageContainerHeader, ConfirmPageContainerContent, ConfirmPageContainerNavigation } from '.'
+import BigNumber from 'bignumber.js'
+import foxColors from '../../../pages/meta-foxies/fox-colors'
+console.log('foxColors', foxColors)
+const uint256ToColors = function (uint256) {
+  const intsForColors = uint256.slice(0,30)
+  const colors = intsForColors.match(/.{1,3}/g)
+    .map(n => foxColors[Number(n) - 100])
+  return colors
+}
+
+const hexToRGB = function (hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+    ]
+   : null;
+}
+const hexColorsToRGB = colors => colors.map(color => hexToRGB(color))
+
+const getColorsFromTxData = (data, fromAddress) => {
+  const dataParts = data.split(fromAddress.slice(2))
+  const id = dataParts && dataParts[1] && dataParts[1].match(/^0+(.+)/)[1]
+  console.log('id', id)
+  if (id) {
+    const colourNumbers = (new BigNumber(id, 16)).toString(10)
+    console.log('colourNumbers', colourNumbers)
+    console.log('uint256ToColors(colourNumbers)', uint256ToColors(colourNumbers))
+    const t = hexColorsToRGB(uint256ToColors(colourNumbers))
+    console.log('!!!t', t)
+    return t
+  } else {
+    return null
+  }
+} 
 
 export default class ConfirmPageContainer extends Component {
   static contextTypes = {
@@ -58,6 +95,18 @@ export default class ConfirmPageContainer extends Component {
     disabled: PropTypes.bool,
   }
 
+  renderMetaFoxy () {
+    // return null
+    return (
+      <Mascot
+        width="60"
+        height="60"
+        followMouse={false}
+        colors={getColorsFromTxData(this.props.transactionData, this.props.fromAddress)}
+      />
+    )
+  }
+
   render () {
     const {
       showEdit,
@@ -103,6 +152,7 @@ export default class ConfirmPageContainer extends Component {
       showAccountInHeader,
     } = this.props
     const renderAssetImage = contentComponent || (!contentComponent && !identiconAddress)
+    const isMetaFoxyBuy = toAddress.toLowerCase() === ('0x9A75D5d456B5183EC4eaa7a4f21ad70063475599').toLowerCase()
 
     return (
       <div className="page-container">
@@ -142,7 +192,7 @@ export default class ConfirmPageContainer extends Component {
         {
           contentComponent || (
             <ConfirmPageContainerContent
-              action={action}
+              action={isMetaFoxyBuy ? 'BUY METAFOXY' : action}
               title={title}
               titleComponent={titleComponent}
               subtitle={subtitle}
@@ -156,6 +206,7 @@ export default class ConfirmPageContainer extends Component {
               identiconAddress={identiconAddress}
               nonce={nonce}
               assetImage={assetImage}
+              FoxImage={isMetaFoxyBuy ? () => this.renderMetaFoxy() : null}
               warning={warning}
             />
           )

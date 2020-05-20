@@ -36,6 +36,7 @@ export default class WalletView extends Component {
       keyrings,
       responsiveDisplayClassname,
       selectedAddress,
+      customWalletColor,
     } = this.props
 
     const checksummedAddress = checksumAddress(selectedAddress)
@@ -58,7 +59,9 @@ export default class WalletView extends Component {
     }
 
     return (
-      <div className={classnames('wallet-view', 'flex-column', responsiveDisplayClassname)}>
+      <div className={classnames('wallet-view', 'flex-column', responsiveDisplayClassname)}
+        style={{ background: customWalletColor || '#fafafa' }}
+      >
         <AccountDetails
           label={label}
           checksummedAddress={checksummedAddress}

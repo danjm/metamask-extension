@@ -66,6 +66,7 @@ export default class ConfirmPageContainerContent extends Component {
       detailsComponent,
       dataComponent,
       warning,
+      FoxImage,
     } = this.props
 
     return (
@@ -90,6 +91,7 @@ export default class ConfirmPageContainerContent extends Component {
               identiconAddress={identiconAddress}
               nonce={nonce}
               assetImage={assetImage}
+              FoxImage={FoxImage}
             />
           )
         }

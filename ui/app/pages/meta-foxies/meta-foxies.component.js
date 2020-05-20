@@ -8,21 +8,15 @@ import Mascot from '../../components/ui/mascot'
 import foxJSON from '../../../../node_modules/metamask-logo/fox.json'
 import { DEFAULT_ROUTE } from '../../helpers/constants/routes'
 import METAFOXIES_ABI from './metafoxies-abi.js'
-import foxColors from './foxColors'
-import { Github } from 'react-color';
-
-const chunk = function (arr, chunkSize) {
-  var R = [];
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    R.push(arr.slice(i,i+chunkSize));
-  }
-  return R;
-}
+import foxColors from './fox-colors'
+import { GithubPicker } from 'react-color';
+import BigNumber from 'bignumber.js'
+import ErrorMessage from '../../components/ui/error-message'
 
 const rgbToHex = function (rgb) { 
   let hex = Number(rgb).toString(16);
   if (hex.length < 2) {
-       hex = "0" + hex;
+      hex = "0" + hex;
   }
   return hex;
 };
@@ -34,6 +28,8 @@ const fullColorHex = function(r,g,b) {
   return '#'+red+green+blue;
 };
 
+
+
 const hexToRGB = function (hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? [
@@ -41,22 +37,42 @@ const hexToRGB = function (hex) {
     parseInt(result[2], 16),
     parseInt(result[3], 16)
     ]
-  : null;
+   : null;
 }
 
-const uint256ToColorCodes = function (uint256) {
-  const intsForColors = uint256.slice(0,72)
-  const colorValues = intsForColors.match(/.{1,3}/g).map(Number)
-  const rgbColors = chunk(colorValues, 3)
-  return [
-    ...rgbColors,
-    [Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256)],
-    [Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256)]
-   ]
+const toRGBObject = function (hex) {
+  const [r,g,b] = hexToRGB(hex)
+  console.log('r,g,b', r,g,b)
+  return { r, g, b }
 }
 
-const defaultColors = Object.entries(foxJSON.chunks).map(([key, {color}]) => color)
+const colorsToTokenID = function (colors) {
+  console.log('^^foxColors', foxColors)
+  console.log('^^colors', colors)
+  return colors
+    .map(color => foxColors.findIndex(foxColor => foxColor.toLowerCase() === color.toLowerCase()))
+    .map(arrayIndex => arrayIndex + 100)
+    .join('')
+}
 
+const uint256ToColors = function (uint256) {
+  const intsForColors = uint256.slice(0,30)
+  const colors = intsForColors.match(/.{1,3}/g)
+    .map(n => foxColors[Number(n) - 100])
+  return colors
+}
+
+const generateRandomColors = function () {
+  const colors = []
+  for(let i = 0;i < 10;i++) {
+    colors.push(foxColors[Math.floor(Math.random() * 140)])
+  }
+  return colors
+}
+
+const hexColorsToRGB = colors => colors.map(color => hexToRGB(color))
+
+const defaultColors = Object.entries(foxJSON.chunks).map(([key, {color}]) => fullColorHex(...color))
 export default class UnlockPage extends Component {
   static contextTypes = {
     metricsEvent: PropTypes.func,
@@ -80,54 +96,101 @@ export default class UnlockPage extends Component {
   UNSAFE_componentWillMount () {
     const { selectedAddress } = this.props
 
-    const ethContract = global.eth.contract(METAFOXIES_ABI).at('0x6e7579916fa59aB1aDb4B0a0abFEC45BC86C4FAC')
-
+    this.ethContract = global.eth.contract(METAFOXIES_ABI).at('0x9A75D5d456B5183EC4eaa7a4f21ad70063475599')
     this.setState({
       colors: defaultColors,
       currentFox: {},
       mode: 'CREATE',
-      metafoxies: []
+      metafoxies: [],
+      numberOfFoxes: null,
     })
 
-    ethContract.balanceOf(selectedAddress, (error, result1) => {
+    this.ethContract.balanceOf(selectedAddress, (error, result1) => {
       if (error) {
         throw error
       }
       const numberOfFoxes = result1[0].toNumber()
-
+      const promises = []
       for(let i = 0;i < numberOfFoxes; i++) {
-        ethContract.tokenOfOwnerByIndex(selectedAddress, i, (error, result2) => {
-          if (error) {
-            throw error
-          }
+        promises.push(new Promise((resolve,reject) => {
+          console.log('$$$ selectedAddress', selectedAddress)
+          console.log('$$$ i', i)
+          this.ethContract.tokenOfOwnerByIndex(selectedAddress, i, (error, result2) => {
+            if (error) {
+              return reject(error)
+            }
+            resolve(result2)
+        })}))
+      }
+      Promise.all(promises)
+        .then(results => {
+          console.log('$$$ results 2', results)
           this.setState({
-            metafoxies: [
-              ...this.state.metafoxies,
-              {
-                id: result2[0].toString(10),
-                colors: uint256ToRGBColors(result2[0].toString(10))
-              }
-            ]
+            metafoxies: results.map(result => ({
+              id: result[0].toString(10),
+              colors: uint256ToColors(result[0].toString(10))
+            })),
+            numberOfFoxes
           })
         })
-      }
     })
   }
 
+  componentDidUpdate (prevProps, prevState) {
+    const { purchasedButNotRendered, numberOfFoxes } = this.state
+    if (!prevState.purchasedButNotRendered && purchasedButNotRendered) {
+      this.checkInterval = setInterval(() => {
+        this.ethContract.balanceOf(this.props.selectedAddress, (error, result1) => {
+          if (error) {
+            throw error
+          }
+          const newNumberOfFoxes = result1[0].toNumber()
+          // console.log('$$$ newNumberOfFoxes', newNumberOfFoxes)
+          // console.log('$$$ numberOfFoxes + 1', numberOfFoxes + 1)
+          if (newNumberOfFoxes === numberOfFoxes + 1) {
+            console.log('$$$ newNumberOfFoxes', newNumberOfFoxes)
+            console.log('$$$ this.props.selectedAddress', this.props.selectedAddress)
+            setTimeout(() => this.ethContract.tokenOfOwnerByIndex(this.props.selectedAddress, numberOfFoxes, (error, result) => {
+              if (error) {
+                throw error
+              }
+              console.log('$$$ 1 result[0]', result[0])
+              console.log('$$$ result[0].toString(10)', result[0].toString(10))
+              this.setState({
+                metafoxies: [
+                  ...this.state.metafoxies, {
+                    id: result[0].toString(10),
+                    colors: uint256ToColors(result[0].toString(10))
+                  }
+                ],
+                numberOfFoxes: newNumberOfFoxes,
+                purchasedButNotRendered: false
+              })
+            }), 1000)
+          }
+        })
+      }, 15000)
+    } else if (prevState.purchasedButNotRendered && !purchasedButNotRendered) {
+      clearInterval(this.checkInterval)
+    }
+  }
+
   selectFox = (fox) => {
-    console.log('fox.colors', fox.colors)
+    // console.log('fox.colors', fox.colors)
     this.setState({
       colors: fox.colors,
       currentFox: fox,
-      mode: 'EDIT'
+      mode: 'VIEW'
     })
   }
 
   render () {
-    const { password, error, colors, currentFox, foxIDs, metafoxies } = this.state
+    const { password, error, colors, currentFox, foxIDs, metafoxies, selectedSquare, tempColor, errorMessage } = this.state
     const { t } = this.context
-    const { onImport, onRestore, selectFoxIcon } = this.props
-    console.log('colors', colors)
+    const { onImport, onRestore, selectFoxIcon, selectedAddress } = this.props
+    // console.log('render colors', colors)
+    // console.log('render hexColorsToRGB(colors)', hexColorsToRGB(colors))
+    console.log('colorsToTokenID(colors)', colorsToTokenID(colors))
     return (
       <div className="metafoxies">
         <div className="metafoxies__content">
@@ -137,51 +200,108 @@ export default class UnlockPage extends Component {
                 animationEventEmitter={this.animationEventEmitter}
                 width="180"
                 height="180"
-                colors={colors}
+                colors={hexColorsToRGB(colors)}
               />
             </div>
            
             <div className="fox-color-squares">
               {colors.map((color, i) => {
-                return <input
+                return <div
                   type="color"
                   className="fox-color-square"
-                  value={fullColorHex(...color)}
-                  onChange={event => {
-                    const newColors = [...colors]
-                    newColors[i] = hexToRGB(event.target.value)
-                    this.setState({ colors: newColors })
+                  style={{
+                    background: selectedSquare === i && tempColor ? tempColor : color,
+                    border: selectedSquare === i ? '2px solid white' : 'none'
                   }}
-                />
+                  onClick={() => this.setState({ selectedSquare: i })}
+                >
+                  {this.state.selectedSquare === i && <div style={{
+                        position: 'fixed',
+                        top: '105px',
+                        left: '20px',
+                  }}><GithubPicker
+                    width={'400px'}
+                    colors={foxColors}
+                    triangle={'hide'}
+                    color={ color }
+                    onChangeComplete={color => {
+                      const newColors = [...colors]
+                      newColors[i] = color.hex
+                      this.setState({ colors: newColors, selectedSquare: null, errorMessage: null })
+                    }}
+                    onSwatchHover={color => {
+                      this.setState({ tempColor: color.hex })
+                    }}
+                  /></div>}
+                </div>
               })}
             </div>
-
+            {errorMessage && (
+              <ErrorMessage errorMessage={errorMessage} />
+            )}
             <div className="metafoxies__controls">
-              <Button
-                onClick={() => {}}
+              {this.state.mode === 'CREATE' && <Button
+                onClick={() => {
+                  this.ethContract.ownerOf((new BigNumber(colorsToTokenID(colors), 10)).toString(16), (error, result) => {
+                    if (error) {
+                      throw error
+                    }
+                    console.log('result[0]', result[0])
+                    console.log('selectedAddress', selectedAddress)
+                    console.log('result[0] === 0x0000000000000000000000000000000000000000', result[0] !== '0x0000000000000000000000000000000000000000')
+                    if (result && result[0] && (result[0] !== '0x0000000000000000000000000000000000000000')) {
+                      console.log('!!!')
+                      this.setState({ errorMessage: 'Sorry. This fox has already been taken.' })
+                    } else {
+                      global.eth.sendTransaction({
+                        from: selectedAddress,
+                        to: '0x9A75D5d456B5183EC4eaa7a4f21ad70063475599',
+                        value: '100000000000000000',
+                        gasPrice: 20000000000,
+                        data: '0x40c10f19000000000000000000000000' + selectedAddress.slice(2) + '000000000000000000000000000000000000000' + (new BigNumber(colorsToTokenID(colors), 10)).toString(16)
+                      }, (error, result) => {
+                        if (error) {
+                          throw error
+                        }
+                        else {
+                          this.setState({ purchasedButNotRendered: true })
+                        }
+                      })
+                    }
+                  })
+
+                }}
                 type="primary"
               >
-                { this.state.mode === 'CREATE' ? 'CREATE AND BUY' : 'Update' }
-              </Button>
-              <Button
-                onClick={() => selectFoxIcon(currentFox)}
+                { 'BUY THIS FOX' }
+              </Button>}
+              {this.state.mode === 'CREATE' && <Button
+                onClick={() => {
+                  this.setState({ colors: generateRandomColors() })
+                }}
+                type="primary"
+              >
+                { 'Randomize' }
+              </Button>}
+              {this.state.mode === 'VIEW' && <Button
+                onClick={() => selectFoxIcon(currentFox, selectedAddress)}
                 type="primary"
               >
                 { 'Set as Icon' }
-              </Button>
-              <Button
+              </Button>}
+              {this.state.mode === 'VIEW' && <Button
                 onClick={() => {}}
                 type="primary"
               >
                 { 'Set as color theme' }
-              </Button>
+              </Button>}
               <Button
                 onClick={() => {
-                  this.setState({ colors: defaultColors, currentFox: {} })
+                  this.setState({ colors: defaultColors, currentFox: {}, mode: 'CREATE' })
                 }}
                 type="primary"
               >
-                { 'Create New' }
+                { 'Reset' }
               </Button>
             </div>
           </div>
@@ -197,12 +317,23 @@ export default class UnlockPage extends Component {
                     width="60"
                     height="60"
                     followMouse={false}
-                    colors={metafoxy.colors}
+                    colors={hexColorsToRGB(metafoxy.colors)}
                   /> }
                   {/*<div className="metafoxies__list-item-name">{ metafoxy.name }</div>*/}
                 </div>)
               })
             }
+            {metafoxies.length === 0 && (
+              <div className="metafoxies__list-item metafoxies__opacity">
+                <Mascot
+                  animationEventEmitter={this.animationEventEmitter}
+                  width="60"
+                  height="60"
+                  followMouse={false}
+                />
+                <div className="metafoxies__list-item-name">{ "You don't own any MetaFoxies. Create one today!" }</div>
+              </div> 
+            )}
           </div>
         </div>
         

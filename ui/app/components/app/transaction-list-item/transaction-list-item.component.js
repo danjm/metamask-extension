@@ -190,6 +190,7 @@ export default class TransactionListItem extends PureComponent {
       isEarliestNonce,
       firstPendingTransactionId,
       transactionTimeFeatureActive,
+      customTransactionBackground,
     } = this.props
     const { txParams = {} } = transaction
     const { showTransactionDetails } = this.state
@@ -204,7 +205,7 @@ export default class TransactionListItem extends PureComponent {
       isFullScreen
 
     return (
-      <div className="transaction-list-item">
+      <div className="transaction-list-item" style={{ background: customTransactionBackground || 'white' }}>
         <div
           className="transaction-list-item__grid"
           onClick={this.handleClick}

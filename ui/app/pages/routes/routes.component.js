@@ -196,6 +196,7 @@ export default class Routes extends Component {
       sidebar,
       submittedPendingTransactions,
       isMouseUser,
+      customMainColor,
     } = this.props
     const isLoadingNetwork = network === 'loading'
     const loadMessage = (loadingMessage || isLoadingNetwork)
@@ -249,7 +250,7 @@ export default class Routes extends Component {
           frequentRpcListDetail={frequentRpcListDetail}
         />
         <AccountMenu />
-        <div className="main-container-wrapper">
+        <div className="main-container-wrapper" style={{ background: customMainColor || 'local' }}>
           { isLoading && <Loading loadingMessage={loadMessage} /> }
           { !isLoading && isLoadingNetwork && <LoadingNetwork /> }
           { this.renderRoutes() }

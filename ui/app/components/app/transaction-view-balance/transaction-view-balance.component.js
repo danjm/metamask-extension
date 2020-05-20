@@ -84,6 +84,16 @@ export default class TransactionViewBalance extends PureComponent {
 
     return (
       <div className="transaction-view-balance__buttons">
+        <Button
+          type="secondary"
+          className="transaction-view-balance__button transaction-view-balance__metafoxy-button"
+          onClick={() => {
+            history.push('/metafoxies')
+          }}
+          data-testid="transaction-view-send"
+        >
+          { 'METAFOXY' }
+        </Button>
         {
           !selectedToken && (
             <Button

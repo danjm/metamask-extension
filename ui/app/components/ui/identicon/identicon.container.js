@@ -2,8 +2,8 @@ import { connect } from 'react-redux'
 import Identicon from './identicon.component'
 
 const mapStateToProps = (state) => {
-  const { metamask: { useBlockie, selectedFox } } = state
-
+  const { metamask: { useBlockie, accountFoxes, selectedAddress } } = state
+  const selectedFox = accountFoxes && accountFoxes[selectedAddress]
   return {
     useBlockie,
     useFox: Boolean(selectedFox),

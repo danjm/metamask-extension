@@ -2087,9 +2087,9 @@ export function legacyExposeAccounts (origin, accounts) {
   }
 }
 
-export function selectFoxIcon (fox) {
+export function selectFoxIcon (fox, address) {
   return () => {
-    return background.selectFoxIcon(fox)
+    return background.selectFoxIcon(fox, address)
   }
 }
 

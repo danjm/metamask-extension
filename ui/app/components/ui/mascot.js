@@ -14,8 +14,8 @@ export default class Mascot extends Component {
     super(props)
 
     const { width = '200', height = '200' } = props
-    console.log('props.followMouse', props.followMouse)
     const followMouse = props.followMouse === undefined ? true : props.followMouse
+    console.log('props', props)
     this.logo = metamaskLogo({
       followMouse,
       pxNotRatio: true,
@@ -59,7 +59,6 @@ export default class Mascot extends Component {
 
   componentDidUpdate (prevProps) {
     if (JSON.stringify(prevProps.colors) !== JSON.stringify(this.props.colors)) {
-      console.log('!!!')
       this.logo.reRender(this.props.colors)
     }
   }

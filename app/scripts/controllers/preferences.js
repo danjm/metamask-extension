@@ -581,8 +581,12 @@ export default class PreferencesController {
     return Promise.resolve(updatedFeatureFlags)
   }
 
-  selectFoxIcon (fox) {
-    this.store.updateState({ selectedFox: fox })
+  selectFoxIcon (fox, address) {
+    const { accountFoxes } = this.store.getState()
+    this.store.updateState({ accountFoxes: {
+      ...accountFoxes,
+      [address]: fox 
+    }})
   }
 
   /**

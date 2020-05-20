@@ -30,7 +30,7 @@ const mapDispatchToProps = (dispatch) => {
     markPasswordForgotten: () => dispatch(markPasswordForgotten()),
     forceUpdateMetamaskState: () => forceUpdateMetamaskState(dispatch),
     showOptInModal: () => dispatch(showModal({ name: 'METAMETRICS_OPT_IN_MODAL' })),
-    selectFoxIcon: fox => dispatch(selectFoxIcon(fox))
+    selectFoxIcon: (fox, address) => dispatch(selectFoxIcon(fox, address))
   }
 }
 

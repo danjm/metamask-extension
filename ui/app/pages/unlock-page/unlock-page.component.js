@@ -65,10 +65,6 @@ export default class UnlockPage extends Component {
       history.push(DEFAULT_ROUTE)
     }
 
-    const colors = Object.entries(foxJSON.chunks).map(([key, {color}]) => color)
-
-    this.setState({colors})
-    console.log('colors', colors)
   }
 
   handleSubmit = async (event) => {

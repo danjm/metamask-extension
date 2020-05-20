@@ -8,6 +8,18 @@ import { checksumAddress } from '../../../helpers/utils/util'
 import Jazzicon from '../jazzicon'
 import Mascot from '../mascot'
 
+const hexToRGB = function (hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+    ]
+   : null;
+}
+const hexColorsToRGB = colors => colors.map(color => hexToRGB(color))
+
+
 const getStyles = (diameter) => (
   {
     height: diameter,
@@ -80,8 +92,8 @@ export default class Identicon extends PureComponent {
     return (<Mascot
       width={this.props.diameter}
       height={this.props.diameter}
-      colors={this.props.foxColors}
-      followMouse={false}
+      colors={hexColorsToRGB(this.props.foxColors)}
+      followMouse={true}
     />)
   }
 
